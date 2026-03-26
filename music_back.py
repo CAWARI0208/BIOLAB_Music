@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 import urllib.request
@@ -17,7 +18,8 @@ from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 
 # --- 1. 資料庫設定 ---
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:0000@localhost/music_db"
+SQLALCHEMY_DATABASE_URL = os.getenv("MYSQL_URL", "mysql://root:iaUGWWVNXoauEJkqxMiTCKDrwqEcPPFQ@mysql.railway.internal:3306/railway")
+# SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:0000@localhost/music_db"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -57,7 +59,7 @@ class YTResultSchema(BaseModel):
     v_id: str
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 def get_db():
     db = SessionLocal()
@@ -284,3 +286,9 @@ def update_song(song_id: int, data: dict, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_song)
     return db_song
+
+if __name__ == "__main__":
+    import uvicorn
+    # 抓取雲端指定的 Port，否則預設 8000
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
