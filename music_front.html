@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Music DataBase</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; color: #333; background-color: #f8f9fa; }
+        .container { max-width: 1200px; margin: auto; }
+        .section { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* 搜尋結果 */
+        #search-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 15px; }
+        .yt-card { background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee; text-align: center; transition: 0.3s; }
+        .yt-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .yt-card img { width: 100%; border-radius: 6px; }
+        .yt-card strong { display: block; margin: 8px 0; height: 2.8em; overflow: hidden; font-size: 0.9em; }
+        
+        /* 輸入與按鈕 */
+        input, select { padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95em; width: 100%; box-sizing: border-box; min-width: 0; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 6px; background: #007bff; color: white; font-weight: 500; transition: 0.2s; }
+        button:hover { background: #0056b3; }
+        .btn-select { background: #28a745; width: 100%; }
+        .btn-filter { background: #6c757d; margin-right: 5px; font-size: 0.85em; padding: 5px 12px; }
+        .btn-filter.active { background: #343a40; }
+
+        /* 表格樣式 */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; font-size: 0.9em; }
+        th { background: #f1f3f5; color: #495057; font-weight: 600; }
+        td { overflow-wrap: break-word; }
+        .action-buttons { display: flex; gap: 5px; }
+        .action-buttons button { padding: 4px 12px; font-size: 0.85em; }
+
+        .grid-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* 強制切分為等寬的三等份 (1:1:1) */
+            gap: 10px;
+            width: 100%;
+        }
+        
+        /* ⭐ 特別處理 YouTube URL 欄位：在寬螢幕時讓它跨列，小螢幕自動縮回 */
+        .full-width {
+            grid-column: 1 / 4; 
+        }
+
+        /* 當 contenteditable 的 td 取得焦點時 */
+        td[contenteditable="true"]:focus {
+            background-color: #fff3cd !important; /* 強制變成黃色 */
+            outline: 1px solid #ffc107;        /* 加上黃色邊框，更有層次感 */
+            border-radius: 2px;    /* 邊框變圓角 */
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎵 音樂資料庫 </h1>
+
+    <div class="section">
+        <h3>🔍 YouTube 音樂搜尋</h3>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="ytQuery" placeholder="輸入歌名或歌手..." style="flex: 1;">
+            <button onclick="searchYT()">搜尋影片</button>
+        </div>
+        <div id="search-results"></div>
+    </div>
+
+    <div class="section">
+        <h3 id="formTitle">✏️ 歌曲詳細資訊</h3>
+        <div class="grid-form">
+            <input type="text" id="title" placeholder="歌名">
+            <input type="text" id="name" placeholder="歌手">
+            <input type="text" id="type" placeholder="種類">
+            <input type="text" id="language" placeholder="語言">
+            <input type="text" id="duration" placeholder="長度">
+            <input type="text" id="release" placeholder="發行年份">
+            <input type="text" id="URL" placeholder="YouTube URL" style="grid-column: span 3;">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="submitBtn" onclick="submitForm()" style="flex: 4; font-size: 1.1em;">✅ 儲存音樂</button>
+            <button id="cancelBtn" onclick="resetForm()" style="flex: 1; background: #6c757d; display: none;">取消修改</button>
+        </div>
+    </div>
+
+    <div class="section" style="padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <strong>快速篩選：</strong>
+            <button class="btn-filter active" onclick="loadSongs()">全部</button>
+            <button class="btn-filter" onclick="filterData('language')">語言</button>
+            <button class="btn-filter" onclick="filterData('type')">種類</button>
+            <button class="btn-filter" onclick="filterData('name')">歌手</button>
+            <button class="btn-filter" onclick="filterData('release')">年份</button> </div>
+    
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="white-space: nowrap;">選擇歌單：</label>
+            <select id="playlistFilter" onchange="loadSongs()" style="color: #5a5f63; width: auto; padding: 5px 10px; margin: 0;">
+                <option value="">歌單名稱</option>
+            </select>
+        </div>
+    </div>
+
+    <table id="mainTable">
+        <thead>
+            <tr>
+                <th style="width: 20%;">歌名</th>
+                <th style="width: 15%;">歌手</th>
+                <th style="width: 6%;">種類</th>
+                <th style="width: 6%;">語言</th>
+                <th style="width: 6%;">發行</th>
+                <th style="width: 6%;">連結</th>
+                <th style="width: 6%;">操作</th>
+            </tr>
+        </thead>
+        <tbody id="songList"></tbody>
+    </table>
+</div>
+
+<script>
+    const API_BASE = "http://127.0.0.1:8000";
+    let currentEditId = null; // 用來記錄目前正在編輯哪一首歌的 ID
+
+    // 1. 載入歌曲列表 (增加「改」按鈕)
+    async function loadSongs() {
+        try {
+            const res = await fetch(`${API_BASE}/songs`);
+            const songs = await res.json();
+            const list = document.getElementById('songList');
+            
+            list.innerHTML = songs.map(s => `
+                <tr id="row-${s.id}" data-duration="${s.duration || ''}">
+                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'title', this)">${s.title}</td>
+                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'name', this)">${s.name || ''}</td>
+                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'type', this)">${s.type || ''}</td>
+                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'language', this)">${s.language || ''}</td>
+                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'release', this)">${s.release || ''}</td>
+                    <td><a href="${s.URL}" target="_blank">▶</a></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button style="background:#ffc107; color:black;" onclick="prepareEdit(${s.id})">更改</button>
+                            <button style="background:#dc3545; color:white;" onclick="deleteSong(${s.id})">刪除</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) { console.error("載入失敗:", err); }
+    }
+
+    // 2. 準備編輯：將表格資料填回輸入框
+    function prepareEdit(id) {
+        currentEditId = id;
+
+        // 透過 id 找到該行
+        const row = document.getElementById(`row-${id}`);
+        // 依序抓取該行中的每個單元格內容 (注意：順序要對應妳的表格結構)
+        const cells = row.getElementsByTagName('td');
+        
+        // 填回輸入框 (innerText 抓取的是當下畫面上顯示的內容)
+        document.getElementById('title').value = cells[0].innerText.trim();
+        document.getElementById('name').value = cells[1].innerText.trim();
+        document.getElementById('type').value = cells[2].innerText.trim();
+        document.getElementById('language').value = cells[3].innerText.trim();
+        document.getElementById('release').value = cells[4].innerText.trim();
+        
+        const savedDuration = row.getAttribute('data-duration');
+        document.getElementById('duration').value = row.getAttribute('data-duration');
+
+        // 連結通常在 <a> 標籤裡，所以要另外抓 href
+        const urlLink = cells[5].querySelector('a').href;
+        document.getElementById('URL').value = urlLink;
+        
+        // 切換 UI 狀態
+        document.getElementById('formTitle').innerText = "📝 歌曲詳細資訊";
+        document.getElementById('submitBtn').innerHTML = "✅ 確認更改";
+        document.getElementById('submitBtn').style.background = "#28a745";
+        document.getElementById('cancelBtn').style.display = "inline-block";
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // 捲動到上方方便搜尋新歌
+    }
+
+    // 重置表單狀態
+    function resetForm() {
+        currentEditId = null;
+        document.querySelectorAll('.section input').forEach(input => input.value = '');
+        document.getElementById('formTitle').innerText = "📝 歌曲詳細資訊 (新增模式)";
+        document.getElementById('submitBtn').innerHTML = "💾 存入資料庫";
+        document.getElementById('submitBtn').style.background = "#007bff";
+        document.getElementById('cancelBtn').style.display = "none";
+    }
+
+    // 3. 提交表單 (智慧判斷 POST 或 PUT)
+    async function submitForm() {
+        // 1. 先抓取所有欄位的值並去除前後空格 (trim)
+        const title = document.getElementById('title').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const type = document.getElementById('type').value.trim();
+        const language = document.getElementById('language').value.trim();
+        const duration = document.getElementById('duration').value.trim();
+        const release = document.getElementById('release').value.trim();
+        const URL = document.getElementById('URL').value.trim();
+
+        // 2. 核心邏輯檢查：
+        // 根據妳的要求：歌名、長度、發行年份、URL 這四個絕對不能空著
+        if (!title || !duration || !release || !URL) {
+            alert("⚠️ 儲存失敗！資訊不完整！");
+            return; // 直接中斷，不執行下方的 fetch
+        }
+
+        // 3. 準備要傳送的資料物件
+        const songData = {
+            title: title,
+            name: name,      // 歌手可為空
+            type: type,      // 種類可為空
+            language: language, // 語言可為空
+            duration: duration,
+            release: release,
+            URL: URL
+        };
+
+        const isUpdate = currentEditId !== null;
+        const url = isUpdate ? `${API_BASE}/songs/${currentEditId}` : `${API_BASE}/songs`;
+        const method = isUpdate ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(songData)
+            });
+
+            if (res.ok) {
+                alert(isUpdate ? "✅ 歌曲資料已更新！" : "✅ 已成功存入資料庫！");
+                resetForm();
+                loadSongs();
+            } else {
+                alert("❌ 操作失敗，請檢查欄位格式是否正確。");
+            }
+        } catch (err) { 
+            console.error("提交錯誤:", err); 
+            alert("連線伺服器失敗，請確認 FastAPI 是否有正常執行。");
+        }
+    }
+
+    // --- 其餘功能保持不變 ---
+    function handleEnter(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            event.target.blur();
+        }
+    }
+
+    async function saveToDatabase(songId, field, cellElement) {
+        const newValue = cellElement.innerText.trim();
+        const updateData = {};
+        updateData[field] = newValue;
+        try {
+            await fetch(`${API_BASE}/songs/${songId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+            cellElement.style.backgroundColor = "#e7f3ff";
+            setTimeout(() => cellElement.style.backgroundColor = "transparent", 500);
+        } catch (err) { console.error("API 錯誤:", err); }
+    }
+
+    async function searchYT() {
+        const query = document.getElementById('ytQuery').value;
+        if (!query) return;
+        const resultsDiv = document.getElementById('search-results');
+        resultsDiv.innerHTML = "🔍 搜尋中...";
+        try {
+            const res = await fetch(`${API_BASE}/youtube_search?query=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            resultsDiv.innerHTML = data.map(v => `
+                <div class="yt-card">
+                    <img src="${v.thumbnail}">
+                    <strong>${v.title}</strong>
+                    <button class="btn-select" onclick='selectVideo(${JSON.stringify(v).replace(/'/g, "&apos;")})'>選取</button>
+                </div>
+            `).join('');
+        } catch (err) { resultsDiv.innerHTML = "搜尋失敗。"; }
+    }
+
+    async function selectVideo(v) {
+        // 1. 判斷目前模式 (決定 UI 顏色與文字)
+        const isUpdateMode = currentEditId !== null;
+
+        // 2. ⭐ 重要：先清空「所有」輸入框，確保舊歌資訊不殘留
+        // 這樣如果是搜尋結果沒提供的欄位 (如 name)，就會變回空白
+        document.querySelectorAll('.section input').forEach(input => input.value = '');
+
+        // 3. 填入從 YouTube 搜尋抓到的「新影片」資訊
+        document.getElementById('title').value = v.title;
+        document.getElementById('duration').value = v.duration;
+        document.getElementById('release').value = v.release;
+        document.getElementById('URL').value = v.URL;
+
+        // 4. 根據模式維持 UI 狀態，但更新標題提示
+        if (isUpdateMode) {
+            document.getElementById('formTitle').innerText = "📝 更改歌曲資訊 (已替換為新影片)";
+            document.getElementById('submitBtn').innerHTML = "✅ 確認更改";
+            document.getElementById('submitBtn').style.background = "#28a745";
+            document.getElementById('cancelBtn').style.display = "inline-block";
+        } else {
+            document.getElementById('formTitle').innerText = "✏️ 歌曲詳細資訊";
+            document.getElementById('submitBtn').innerHTML = "✅ 儲存音樂";
+            document.getElementById('submitBtn').style.background = "#007bff";
+            document.getElementById('cancelBtn').style.display = "none";
+        }
+
+        // 5. 執行妳那套強大的後端偵測邏輯
+        document.getElementById('language').value = "偵測中...";
+        document.getElementById('type').value = "偵測中...";
+        
+        try {
+            const res = await fetch(`${API_BASE}/detect_lang?v_id=${v.v_id}&title=${encodeURIComponent(v.title)}`);
+            const data = await res.json();
+            
+            // 填入偵測結果，若沒偵測到就給空白
+            document.getElementById('language').value = data.language || ""; 
+            document.getElementById('type').value = data.type || "Pop";
+            
+        } catch (err) { 
+            console.error("偵測失敗:", err);
+            document.getElementById('language').value = ""; 
+            document.getElementById('type').value = ""; 
+        }
+    }
+
+    async function deleteSong(id) {
+        if (!confirm("確定要刪除？")) return;
+        const res = await fetch(`${API_BASE}/songs/${id}`, { method: 'DELETE' });
+        if (res.ok) loadSongs();
+    }
+
+    loadSongs();
+</script>
+</body>
+</html>
