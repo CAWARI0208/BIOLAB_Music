@@ -18,8 +18,13 @@ from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 
 # --- 1. 資料庫設定 ---
-SQLALCHEMY_DATABASE_URL = os.getenv("MYSQL_URL", "mysql://root:iaUGWWVNXoauEJkqxMiTCKDrwqEcPPFQ@mysql.railway.internal:3306/railway")
+raw_url = os.getenv("MYSQL_URL", "mysql://root:iaUGWWVNXoauEJkqxMiTCKDrwqEcPPFQ@mysql.railway.internal:3306/railway")
 # SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:0000@localhost/music_db"
+
+if raw_url and raw_url.startswith("mysql://"):
+    SQLALCHEMY_DATABASE_URL = raw_url.replace("mysql://", "mysql+pymysql://", 1)
+else:
+    SQLALCHEMY_DATABASE_URL = raw_url
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
