@@ -115,13 +115,15 @@
 </div>
 
 <script>
-    const API_BASE = "http://127.0.0.1:8000";
+    const API_BASE = "https://biolabmusic-production.up.railway.app";
     let currentEditId = null; // 用來記錄目前正在編輯哪一首歌的 ID
 
     // 1. 載入歌曲列表 (增加「改」按鈕)
     async function loadSongs() {
         try {
             const res = await fetch(`${API_BASE}/songs`);
+            if (!res.ok) throw new Error("伺服器回應異常");
+
             const songs = await res.json();
             const list = document.getElementById('songList');
             
@@ -141,7 +143,7 @@
                     </td>
                 </tr>
             `).join('');
-        } catch (err) { console.error("載入失敗:", err); }
+        } catch (err) { console.error("載入失敗:", err); document.getElementById('songList').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">連線不到雲端伺服器，請檢查 CORS 或 Railway 狀態</td></tr>`;}
     }
 
     // 2. 準備編輯：將表格資料填回輸入框
