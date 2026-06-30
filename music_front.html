@@ -157,10 +157,11 @@
 <script>
     const API_BASE = "https://biolabmusic-production-65b7.up.railway.app";
     let allSongs = []
-    let currentEditId = null; // 用來記錄目前正在編輯哪一首歌的 ID
+    let currentFilterType = "all";
+    //let currentEditId = null; // 用來記錄目前正在編輯哪一首歌的 ID
 
     // 1. 載入歌曲列表 (增加「改」按鈕)
-    async function loadSongs() {
+    /*async function loadSongs() {
         try {
             const res = await fetch(`${API_BASE}/songs`);
             const songs = await res.json();
@@ -170,9 +171,16 @@
             populateFilters(); // ⭐ 加這行
 
         } catch (err) { console.error("載入失敗:", err); }
+    }*/
+    async function loadSongs() {
+        const res = await fetch(`${API_BASE}/songs`);
+        const songs = await res.json();
+
+        allSongs = songs;   // ⭐ 存資料
+        renderSongs(songs);
     }
 
-    function populateFilters() {
+    /*function populateFilters() {
         const langSet = new Set();
         const typeSet = new Set();
         const yearSet = new Set();
@@ -186,7 +194,31 @@
         setOptions("filterLanguage", langSet);
         setOptions("filterType", typeSet);
         setOptions("filterYear", yearSet);
+    }*/ 
+    function onFilterTypeChange() {
+        const type = document.getElementById("filterType").value;
+        currentFilterType = type;
+
+        const select = document.getElementById("filterValue");
+
+        // 如果選「全部」
+        if (type === "all") {
+            select.innerHTML = `<option value="">全部</option>`;
+            renderSongs(allSongs);
+            return;
+        }
+
+        // 取出該欄位所有值
+        const values = [...new Set(
+            allSongs.map(s => s[type]).filter(v => v)
+        )];
+
+        select.innerHTML = `
+            <option value="">選擇</option>
+            ${values.map(v => `<option value="${v}">${v}</option>`).join("")}
+        `;
     }
+
 
     function setOptions(id, values) {
         const select = document.getElementById(id);
@@ -202,7 +234,7 @@
         });
     }
 
-    function applyFilters() {
+    /*function applyFilters() {
         const lang = document.getElementById("filterLanguage").value;
         const type = document.getElementById("filterType").value;
         const year = document.getElementById("filterYear").value;
@@ -212,6 +244,18 @@
                 (!type || song.type === type) &&
                 (!year || song.release === year);
         });
+
+        renderSongs(filtered);
+    }*/
+    function applyFilter() {
+        const value = document.getElementById("filterValue").value;
+
+        if (!value || currentFilterType === "all") {
+            renderSongs(allSongs);
+            return;
+        }
+
+        const filtered = allSongs.filter(s => s[currentFilterType] == value);
 
         renderSongs(filtered);
     }
@@ -245,7 +289,7 @@
         `).join('');
     }
 
-    function filterData(type) {
+    /*function filterData(type) {
         const container = document.getElementById("dynamicFilters")
         container.innerHTML = ""
 
@@ -266,23 +310,23 @@
 
             container.appendChild(btn)
         })
-    }
+    }*/ 
 
     // 🎯 套用篩選
-    function applyFilter(type, value) {
+    /*function applyFilter(type, value) {
         const filtered = allSongs.filter(song => song[type] === value);
 
         renderSongs(filtered);
 
         // 🔥 清掉按鈕
         document.getElementById("dynamicFilters").innerHTML = "";
-    }
+    }*/
 
     // 🔄 重置
-    function resetFilter() {
+    /*function resetFilter() {
         renderSongs(allSongs);
         document.getElementById("dynamicFilters").innerHTML = "";
-    }
+    }*/ 
 
 
     // 2. 準備編輯：將表格資料填回輸入框
