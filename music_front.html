@@ -69,9 +69,21 @@
             flex-wrap: wrap;
         }
 
-        .filter-left {
-            width: auto !important;   /* ⭐ 關鍵 */
+        #filterType,
+        #filterValue {
+            width: auto !important;
             min-width: 120px;
+        }
+
+        .filter-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .filter-left strong {
+            white-space: nowrap;
         }
 
         .filter-right {
