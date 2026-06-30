@@ -292,6 +292,10 @@ def update_song(song_id: int, data: dict, db: Session = Depends(get_db)):
     db.refresh(db_song)
     return db_song
 
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
 if __name__ == "__main__":
     import uvicorn
     # 抓取雲端指定的 Port，否則預設 8000
