@@ -51,7 +51,7 @@
         }
         
         .filter-select {
-            flex: 0.1;        /* ⭐ 重點：等比例 */
+            flex: 1;        /* ⭐ 重點：等比例 */
             min-width: 80px;
             background: #82878b;
             height: 31px;
@@ -211,7 +211,7 @@
         // 取出該欄位所有值
         const values = [...new Set(
             allSongs.map(s => s[type]).filter(v => v)
-        )];
+        )].sort();
 
         select.innerHTML = `
             <option value="">選擇</option>
