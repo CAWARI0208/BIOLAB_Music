@@ -49,6 +49,38 @@
             outline: 1px solid #ffc107;        /* 加上黃色邊框，更有層次感 */
             border-radius: 2px;    /* 邊框變圓角 */
         }
+        
+        .filter-select {
+            flex: 0.1;        /* ⭐ 重點：等比例 */
+            min-width: 80px;
+            background: #82878b;
+            height: 31px;
+            color: white;
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 5px;
+        }
+
+        .filter-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-left,
+        .filter-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        select {
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+
     </style>
 </head>
 <body>
@@ -81,32 +113,27 @@
         </div>
     </div>
 
-    <div class="section" style="padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+    <div class="section filter-bar">
+
+        <!-- 左邊：選擇篩選類型 -->
+        <div class="filter-left">
             <strong>快速篩選：</strong>
-
-            <button class="btn-filter" onclick="resetFilter()">全部</button>
-
-            <select style="background: #82878b; height: 31px; color: white; font-weight: 500; transition: 0.2s; width: auto; margin-right: 5px; font-size: 0.85em; padding: 5px 12px; " id="filterLanguage" onchange="applyFilters()">
-                <option value="">語言</option>
-            </select>
-        
-            <select style="background: #82878b; height: 31px; color: white; font-weight: 500; transition: 0.2s; width: auto; margin-right: 5px; font-size: 0.85em; padding: 5px 12px; " id="filterType" onchange="applyFilters()">
-                <option value="">種類</option>
-            </select>
-        
-            <select style="background: #82878b; height: 31px; color: white; font-weight: 500; transition: 0.2s; width: auto; margin-right: 5px; font-size: 0.85em; padding: 5px 12px; " id="filterYear" onchange="applyFilters()">
-                <option value="">年份</option>
+    
+            <select id="filterType" onchange="onFilterTypeChange()">
+                <option value="all">全部</option>
+                <option value="type">種類</option>
+                <option value="language">語言</option>
+                <option value="release">年份</option>
             </select>
         </div>
-        
-
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="white-space: nowrap;">選擇歌單：</label>
-            <select id="playlistFilter" onchange="loadSongs()" style="color: #5a5f63; width: auto; padding: 5px 10px; margin: 0;">
-                <option value="">歌單名稱</option>
+    
+        <!-- 右邊：細項 -->
+        <div class="filter-right">
+            <select id="filterValue" onchange="applyFilter()">
+                <option value="">請先選擇</option>
             </select>
         </div>
+    
     </div>
 
     <div id="dynamicFilters" style="margin-top:10px;"></div>
