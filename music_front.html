@@ -69,11 +69,16 @@
             flex-wrap: wrap;
         }
 
-        .filter-left,
+        .filter-left {
+            width: auto !important;   /* ⭐ 關鍵 */
+            min-width: 120px;
+        }
+
         .filter-right {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         select {
@@ -117,7 +122,7 @@
 
         <!-- 左邊：選擇篩選類型 -->
         <div class="filter-left">
-            <strong>快速篩選：</strong>
+            <strong style="white-space: nowrap;">快速篩選：</strong>
     
             <select id="filterType" onchange="onFilterTypeChange()">
                 <option value="all">全部</option>
