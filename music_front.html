@@ -82,14 +82,25 @@
     </div>
 
     <div class="section" style="padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="display: flex; align-items: center; gap: 5px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <strong>快速篩選：</strong>
-            <button class="btn-filter active" onclick="loadSongs()">全部</button>
-            <button class="btn-filter" onclick="filterData('language')">語言</button>
-            <button class="btn-filter" onclick="filterData('type')">種類</button>
-            <button class="btn-filter" onclick="filterData('name')">歌手</button>
-            <button class="btn-filter" onclick="filterData('release')">年份</button> </div>
-    
+
+            <button class="btn-filter" onclick="resetFilter()">全部</button>
+
+            <select style="background: #82878b; height: 31px; color: white; font-weight: 500; transition: 0.2s; width: auto; margin-right: 5px; font-size: 0.85em; padding: 5px 12px; " id="filterLanguage" onchange="applyFilters()">
+                <option value="">語言</option>
+            </select>
+        
+            <select style="background: #82878b; height: 31px; color: white; font-weight: 500; transition: 0.2s; width: auto; margin-right: 5px; font-size: 0.85em; padding: 5px 12px; " id="filterType" onchange="applyFilters()">
+                <option value="">種類</option>
+            </select>
+        
+            <select style="background: #82878b; height: 31px; color: white; font-weight: 500; transition: 0.2s; width: auto; margin-right: 5px; font-size: 0.85em; padding: 5px 12px; " id="filterYear" onchange="applyFilters()">
+                <option value="">年份</option>
+            </select>
+        </div>
+        
+
         <div style="display: flex; align-items: center; gap: 8px;">
             <label style="white-space: nowrap;">選擇歌單：</label>
             <select id="playlistFilter" onchange="loadSongs()" style="color: #5a5f63; width: auto; padding: 5px 10px; margin: 0;">
@@ -97,6 +108,8 @@
             </select>
         </div>
     </div>
+
+    <div id="dynamicFilters" style="margin-top:10px;"></div>
 
     <table id="mainTable">
         <thead>
@@ -116,35 +129,134 @@
 
 <script>
     const API_BASE = "https://biolabmusic-production-65b7.up.railway.app";
+    let allSongs = []
     let currentEditId = null; // 用來記錄目前正在編輯哪一首歌的 ID
 
     // 1. 載入歌曲列表 (增加「改」按鈕)
     async function loadSongs() {
         try {
             const res = await fetch(`${API_BASE}/songs`);
-            if (!res.ok) throw new Error("伺服器回應異常");
-
             const songs = await res.json();
-            const list = document.getElementById('songList');
-            
-            list.innerHTML = songs.map(s => `
-                <tr id="row-${s.id}" data-duration="${s.duration || ''}">
-                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'title', this)">${s.title}</td>
-                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'name', this)">${s.name || ''}</td>
-                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'type', this)">${s.type || ''}</td>
-                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'language', this)">${s.language || ''}</td>
-                    <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'release', this)">${s.release || ''}</td>
-                    <td><a href="${s.URL}" target="_blank">▶</a></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button style="background:#ffc107; color:black;" onclick="prepareEdit(${s.id})">更改</button>
-                            <button style="background:#dc3545; color:white;" onclick="deleteSong(${s.id})">刪除</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        } catch (err) { console.error("載入失敗:", err); document.getElementById('songList').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">連線不到雲端伺服器，請檢查 CORS 或 Railway 狀態</td></tr>`;}
+
+            allSongs = songs;   // ⭐ 存起來
+            renderSongs(songs); // ⭐ 改用 render function
+            populateFilters(); // ⭐ 加這行
+
+        } catch (err) { console.error("載入失敗:", err); }
     }
+
+    function populateFilters() {
+        const langSet = new Set();
+        const typeSet = new Set();
+        const yearSet = new Set();
+
+        allSongs.forEach(song => {
+            if (song.language) langSet.add(song.language);
+            if (song.type) typeSet.add(song.type);
+            if (song.release) yearSet.add(song.release);
+        });
+
+        setOptions("filterLanguage", langSet);
+        setOptions("filterType", typeSet);
+        setOptions("filterYear", yearSet);
+    }
+
+    function setOptions(id, values) {
+        const select = document.getElementById(id);
+
+        // 保留第一個 option
+        select.innerHTML = select.children[0].outerHTML;
+
+        [...values].sort().forEach(val => {
+            const opt = document.createElement("option");
+            opt.value = val;
+            opt.textContent = val;
+            select.appendChild(opt);
+        });
+    }
+
+    function applyFilters() {
+        const lang = document.getElementById("filterLanguage").value;
+        const type = document.getElementById("filterType").value;
+        const year = document.getElementById("filterYear").value;
+
+        const filtered = allSongs.filter(song => {
+            return (!lang || song.language === lang) &&
+                (!type || song.type === type) &&
+                (!year || song.release === year);
+        });
+
+        renderSongs(filtered);
+    }
+
+    function resetFilter() {
+        document.getElementById("filterLanguage").value = "";
+        document.getElementById("filterType").value = "";
+        document.getElementById("filterYear").value = "";
+
+        renderSongs(allSongs);
+    }
+
+    function renderSongs(songs) {
+        const list = document.getElementById('songList');
+
+        list.innerHTML = songs.map(s => `
+            <tr id="row-${s.id}" data-duration="${s.duration || ''}">
+                <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'title', this)">${s.title}</td>
+                <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'name', this)">${s.name || ''}</td>
+                <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'type', this)">${s.type || ''}</td>
+                <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'language', this)">${s.language || ''}</td>
+                <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'release', this)">${s.release || ''}</td>
+                <td><a href="${s.URL}" target="_blank">▶</a></td>
+                <td>
+                    <div class="action-buttons">
+                        <button style="background:#ffc107; color:black;" onclick="prepareEdit(${s.id})">更改</button>
+                        <button style="background:#dc3545; color:white;" onclick="deleteSong(${s.id})">刪除</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function filterData(type) {
+        const container = document.getElementById("dynamicFilters")
+        container.innerHTML = ""
+
+        let values = new Set()
+
+        allSongs.forEach(song => {
+            if (song[type]) {
+                values.add(song[type])
+            }
+        })
+
+        values.forEach(val => {
+            const btn = document.createElement("button")
+            btn.innerText = val
+            btn.className = "btn-filter"
+
+            btn.onclick = () => applyFilter(type, val)
+
+            container.appendChild(btn)
+        })
+    }
+
+    // 🎯 套用篩選
+    function applyFilter(type, value) {
+        const filtered = allSongs.filter(song => song[type] === value);
+
+        renderSongs(filtered);
+
+        // 🔥 清掉按鈕
+        document.getElementById("dynamicFilters").innerHTML = "";
+    }
+
+    // 🔄 重置
+    function resetFilter() {
+        renderSongs(allSongs);
+        document.getElementById("dynamicFilters").innerHTML = "";
+    }
+
 
     // 2. 準備編輯：將表格資料填回輸入框
     function prepareEdit(id) {
