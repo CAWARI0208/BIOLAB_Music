@@ -18,7 +18,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
 
 # --- 1. 資料庫設定 ---
-raw_url = os.getenv("MYSQL_URL", "mysql://root:iaUGWWVNXoauEJkqxMiTCKDrwqEcPPFQ@mysql.railway.internal:3306/railway")
+raw_url = os.getenv("MYSQL_URL")
 # SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:0000@localhost/music_db"
 
 if raw_url and raw_url.startswith("mysql://"):
