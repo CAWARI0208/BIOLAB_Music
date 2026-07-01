@@ -385,7 +385,7 @@
     function resetForm() {
         currentEditId = null;
         document.querySelectorAll('.section input').forEach(input => input.value = '');
-        document.getElementById('formTitle').innerText = "📝 歌曲詳細資訊 (新增模式)";
+        document.getElementById('formTitle').innerText = "📝 歌曲詳細資訊";
         document.getElementById('submitBtn').innerHTML = "💾 存入資料庫";
         document.getElementById('submitBtn').style.background = "#007bff";
         document.getElementById('cancelBtn').style.display = "none";
@@ -501,7 +501,7 @@
 
         // 4. 根據模式維持 UI 狀態，但更新標題提示
         if (isUpdateMode) {
-            document.getElementById('formTitle').innerText = "📝 更改歌曲資訊 (已替換為新影片)";
+            document.getElementById('formTitle').innerText = "📝 更改歌曲資訊";
             document.getElementById('submitBtn').innerHTML = "✅ 確認更改";
             document.getElementById('submitBtn').style.background = "#28a745";
             document.getElementById('cancelBtn').style.display = "inline-block";
