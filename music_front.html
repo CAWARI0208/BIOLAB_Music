@@ -162,6 +162,7 @@
                 <th style="width: 15%;">歌手</th>
                 <th style="width: 6%;">種類</th>
                 <th style="width: 6%;">語言</th>
+                <th style="width: 6%;">長度</th>
                 <th style="width: 6%;">發行</th>
                 <th style="width: 6%;">連結</th>
                 <th style="width: 6%;">操作</th>
@@ -294,6 +295,7 @@
                 <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'name', this)">${s.name || ''}</td>
                 <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'type', this)">${s.type || ''}</td>
                 <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'language', this)">${s.language || ''}</td>
+                <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'duration', this)">${s.duration || ''}</td>
                 <td contenteditable="true" onkeydown="handleEnter(event)" onblur="saveToDatabase(${s.id}, 'release', this)">${s.release || ''}</td>
                 <td><a href="${s.URL}" target="_blank">▶</a></td>
                 <td>
@@ -360,13 +362,14 @@
         document.getElementById('name').value = cells[1].innerText.trim();
         document.getElementById('type').value = cells[2].innerText.trim();
         document.getElementById('language').value = cells[3].innerText.trim();
-        document.getElementById('release').value = cells[4].innerText.trim();
+        document.getElementById('duration').value = cells[4].innerText.trim();
+        document.getElementById('release').value = cells[5].innerText.trim();
         
-        const savedDuration = row.getAttribute('data-duration');
-        document.getElementById('duration').value = row.getAttribute('data-duration');
+        // const savedDuration = row.getAttribute('data-duration');
+        // document.getElementById('duration').value = row.getAttribute('data-duration');
 
         // 連結通常在 <a> 標籤裡，所以要另外抓 href
-        const urlLink = cells[5].querySelector('a').href;
+        const urlLink = cells[6].querySelector('a').href;
         document.getElementById('URL').value = urlLink;
         
         // 切換 UI 狀態
