@@ -87,9 +87,9 @@ def get_advanced_metadata(v_id, title):
         # --- A. 語言判定 (優先度最高) ---
         lang_keywords = {
             "Spanish": ["spanish", "puerto rico", "latin pop", "reggaeton"],
-            "Japanese": ["japanese", "j-pop", "japan", "anime"],
-            "Korean": ["korean", "k-pop", "south korea", "hangul"],
-            "Chinese": ["chinese", "mandarin", "cantonese", "taiwan", "hong kong", "mandopop"]
+            "Japanese": ["japanese", "j-pop", "jpop", "japan", "anime"],
+            "Korean": ["korean", "k-pop", "kpop","south korea", "hangul"],
+            "Chinese": ["chinese", "mandarin", "cantonese", "taiwan", "taiwanese","hong kong", "mandopop"]
         }
         for lang, keys in lang_keywords.items():
             if any(k in text_summary for k in keys):
